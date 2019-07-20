@@ -2,6 +2,7 @@
 <html>
     <head>
         <title>Calculator</title>
+        <link rel="stylesheet" type="text/css" href="style.css"> 
     </head>
     <body>
         <h1>Calculator</h1>
@@ -10,6 +11,7 @@
                 0
             </div>
             <div class="buttons">
+                    <button id="clear" value="clear">Clear</button>
                 <div class="digits">
                     <button id="zero" value="0">0</button>
                     <button id="one" value="1">1</button>
@@ -22,19 +24,17 @@
                     <button id="eight" value="8">8</button>
                     <button id="nine" value="9">9</button>
                 </div>
-                <div class="extras">
-                    <button id="clear" value="clear">Clear</button>
-                    <button id="percent" value="decimalToPercent">%</button>
-                    <button id="switch-sign" value="switchSign">+/-</button>
+                <div class="unary">
+                    <button id="percent" value="%">%</button>
+                    <button id="switch-sign" value="+/-">+/-</button>
                 </div>
-                <div class="operations">
-                    <button id="add" value="add">+</button>
-                    <button id="subtract" value="subtract">-</button>
-                    <button id="multiply" value="multiply">×</button>
-                    <button id="divide" value="divide">÷</button>
+                <div class="binary">
+                    <button id="add" value="+">+</button>
+                    <button id="subtract" value="-">-</button>
+                    <button id="multiply" value="*">×</button>
+                    <button id="divide" value="/">÷</button>
+                </div>
                     <button id="equals" value="=">=</button>
-
-                </div>
             </div>
         </div>
 

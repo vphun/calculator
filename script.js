@@ -1,26 +1,64 @@
-let currentDisplay = "";
+let currentDisplay = "0";
+let currentOperation;
+let lastDisplay;
+
+const displayDiv = document.querySelector(".display");
+
+const operations = {
+    "%" : percentToDecimal,
+    "+/-" : switchSign,
+    "+" : add,
+    "-" : subtract,
+    "*" : multiply,
+    "/" : divide,
+};
 
 const digits = document.querySelectorAll(".digits button");
 digits.forEach(digit=>digit.addEventListener("click", e => {
     console.log(e.target.value);
+    if (currentDisplay == "0") {
+        currentDisplay = "";
+    }
     currentDisplay += e.target.value;
-    updateDisplay(currentDisplay);
+    updateDisplay();
 }));
 
-const operations = document.querySelectorAll(".operations button");
-operations.forEach(operation=>operation.addEventListener("click", e =>{
+const clearBtn = document.querySelector("#clear");
+clearBtn.addEventListener("click", e => {
     console.log(e.target.value);
+    clearScreen();
+})
 
-
+const unaryOps = document.querySelectorAll(".unary button");
+unaryOps.forEach(operation=>operation.addEventListener("click", e => {
+    console.log(e.target.value);
+    currentDisplay = operations[e.target.value](currentDisplay);
+    updateDisplay();
 }));
 
-function updateDisplay(display) {
-    const displayDiv = document.querySelector(".display");
-    displayDiv.textContent = display;
+const binaryOps = document.querySelectorAll(".binary button");
+binaryOps.forEach(operation=>operation.addEventListener("click", e =>{
+    console.log(e.target.value);
+    currentOperation = e.target.value;
+    lastDisplay = currentDisplay;
+    currentDisplay = "";
+}));
+
+const equals = document.querySelector("#equals");
+equals.addEventListener("click", e => {
+    console.log(e.target.value);
+    currentDisplay = operations[currentOperation](lastDisplay, currentDisplay);
+    updateDisplay();
+})
+
+function updateDisplay() {
+    
+    displayDiv.textContent = currentDisplay;
 }
 
 function clearScreen() {
-    displayDiv.textContent = "0";
+    currentDisplay = "0";
+    updateDisplay();
 }
 
 function add(x, y) {
@@ -46,6 +84,11 @@ function switchSign(x) {
 function percentToDecimal(x) {
     return x/100;
 }
-function operate(operator, x, y) {
-    return operator(x, y);
+
+function unaryOperate(op, x) {
+    return op(x);
+}
+
+function binaryOperate(op, x, y) {
+    return op(x, y);
 }
