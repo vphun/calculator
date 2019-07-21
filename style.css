@@ -1,4 +1,128 @@
-button {
-    border-radius: 50%;
-    border: 1px solid transparent;
+body {
+    text-align: center;
+    font-family: Helvetica, sans-serif;
+    background-color: black;
+    color: white;
 }
+
+.calculator {
+    margin: 0 auto;
+    display: grid;
+    max-height: 200px;
+    max-width: 200px;
+    grid-template-areas:
+        "display"
+        "buttons";
+}
+
+.buttons {
+    display: grid;
+    border: 1px solid black;
+    grid-area: buttons;
+    grid-template-areas:
+    "clear unary binary"
+    "digits digits binary"
+    "digits digits equals";
+}
+
+.digits {
+    display: grid;
+    grid-area: digits;
+    grid-template-areas:
+        "seven eight nine"
+        "four five six"
+        "one two three"
+        "zero zero dot";
+}
+
+.unary {
+    display: grid;
+    grid-area: unary;
+    grid-template-areas:
+        "switch percent";
+}
+
+.binary {
+    display: grid;
+    grid-area: binary;
+    grid-template-areas:
+        "divide"
+        "multiply"
+        "subtract"
+        "add";
+}
+button {
+    height: 50px;
+    width: 50px;
+    border-radius: 100%;
+    border: 1px solid transparent;
+    color: white;
+    font-size: 24px;
+    margin: 5px;
+}
+
+.binary button, #equals { 
+    background-color: #E48600;
+}
+
+.digits button {
+    background-color: #333333;
+}
+
+#clear, .unary button {
+    background-color: #A5A5A5;
+    color: black;
+}
+
+.display {
+    max-width: 235px;
+    grid-area: display;
+    font-size: 45px;
+    text-align: right;
+}
+
+#zero { 
+    grid-area: zero;
+    width: auto;
+    border-radius: 50px;
+    text-align: left;
+    padding-left: 15px;
+}
+
+#one {
+    grid-area: one;
+}
+
+#two {grid-area: two; }
+
+#three {grid-area: three;}
+
+#four {grid-area: four;}
+
+#five {grid-area: five;}
+
+#six {grid-area: six;}
+
+#seven {grid-area: seven;}
+
+#eight {grid-area: eight;}
+
+#nine {grid-area: nine;}
+
+#clear {grid-area: clear;}
+
+#dec {grid-area: dot;}
+
+#percent {grid-area: percent;}
+
+#switch-sign {grid-area: switch;}
+
+#add {grid-area: add;}
+
+#subtract {grid-area: subtract;}
+
+#multiply {grid-area: multiply;}
+
+#divide {grid-area: divide;}
+
+#equals {grid-area: equals;}
