@@ -2,6 +2,8 @@ let currentDisplay = "0";
 let currentOperation;
 let lastDisplay;
 let lastOperation;
+let tempDisplay;
+let tempOperation;
 
 const displayDiv = document.querySelector(".display");
 
@@ -47,16 +49,24 @@ binaryOps.forEach(operation=>operation.addEventListener("click", e =>{
         console.log("lastDisplay in if" + lastDisplay);
         if (currentOperation == lastOperation) {
             currentDisplay = operations[currentOperation](lastDisplay, currentDisplay);
-            lastDisplay = "";
             updateDisplay();
         }
         else {
             if (currentOperation == "+" || currentOperation == "-") {
                 currentDisplay = operations[lastOperation](lastDisplay, currentDisplay);
+                if (tempDisplay) {
+                    console.log("temp!" + tempDisplay + tempOperation);
+                    currentDisplay = operations[tempOperation](tempDisplay, currentDisplay);
+                    tempDisplay = "";
+                    tempOperation = "";
+                }
                 updateDisplay();
             }
             else {
-                
+                tempDisplay = lastDisplay;
+                tempOperation = lastOperation;
+                console.log("saving tempdisplay" + tempDisplay);
+                console.log("saving temp operation" + tempOperation);
             }
 
         }
@@ -70,6 +80,12 @@ const equals = document.querySelector("#equals");
 equals.addEventListener("click", e => {
     console.log(e.target.value);
     currentDisplay = operations[currentOperation](lastDisplay, currentDisplay);
+    if (tempDisplay) {
+        console.log("temp!" + tempDisplay + tempOperation);
+        currentDisplay = operations[tempOperation](tempDisplay, currentDisplay);
+        tempDisplay = "";
+        tempOperation = "";
+    }
     updateDisplay();
 })
 
@@ -80,6 +96,9 @@ function updateDisplay() {
 
 function clearScreen() {
     currentDisplay = "0";
+    lastDisplay = "";
+    lastOperation = "";
+    currentOperation = "";
     updateDisplay();
 }
 
