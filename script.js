@@ -19,11 +19,13 @@ const operations = {
 const digits = document.querySelectorAll(".digits button");
 digits.forEach(digit=>digit.addEventListener("click", e => {
     console.log(e.target.value);
-    if (currentDisplay == "0") {
-        currentDisplay = "";
+    if (currentDisplay.length <= 9) {
+        if (currentDisplay == "0") {
+            currentDisplay = "";
+        }
+        currentDisplay += e.target.value;
+        updateDisplay();
     }
-    currentDisplay += e.target.value;
-    updateDisplay();
 }));
 
 const clearBtn = document.querySelector("#clear");
