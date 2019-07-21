@@ -29,8 +29,8 @@ digits.forEach(digit=>digit.addEventListener("click", e => {
 const clearBtn = document.querySelector("#clear");
 clearBtn.addEventListener("click", e => {
     console.log(e.target.value);
-    clearScreen();
-})
+    clearMemory();
+});
 
 const unaryOps = document.querySelectorAll(".unary button");
 unaryOps.forEach(operation=>operation.addEventListener("click", e => {
@@ -43,34 +43,9 @@ const binaryOps = document.querySelectorAll(".binary button");
 binaryOps.forEach(operation=>operation.addEventListener("click", e =>{
     lastOperation = currentOperation;
     currentOperation = e.target.value;
-    console.log(currentOperation);
-    console.log("lastDisplay before if" + lastDisplay);
-    if (lastOperation) {
-        console.log("lastDisplay in if" + lastDisplay);
-        if (currentOperation == lastOperation) {
-            currentDisplay = operations[currentOperation](lastDisplay, currentDisplay);
-            updateDisplay();
-        }
-        else {
-            if (currentOperation == "+" || currentOperation == "-") {
-                currentDisplay = operations[lastOperation](lastDisplay, currentDisplay);
-                if (tempDisplay) {
-                    console.log("temp!" + tempDisplay + tempOperation);
-                    currentDisplay = operations[tempOperation](tempDisplay, currentDisplay);
-                    tempDisplay = "";
-                    tempOperation = "";
-                }
-                updateDisplay();
-            }
-            else {
-                tempDisplay = lastDisplay;
-                tempOperation = lastOperation;
-                console.log("saving tempdisplay" + tempDisplay);
-                console.log("saving temp operation" + tempOperation);
-            }
-
-        }
-    }
+    console.log("last operation: " + lastOperation);
+    console.log("current operation: " + currentOperation);
+    if (lastOperation) handlePEMDAS();
     lastDisplay = currentDisplay;
     currentDisplay = "";
 
@@ -79,26 +54,54 @@ binaryOps.forEach(operation=>operation.addEventListener("click", e =>{
 const equals = document.querySelector("#equals");
 equals.addEventListener("click", e => {
     console.log(e.target.value);
-    currentDisplay = operations[currentOperation](lastDisplay, currentDisplay);
-    if (tempDisplay) {
-        console.log("temp!" + tempDisplay + tempOperation);
-        currentDisplay = operations[tempOperation](tempDisplay, currentDisplay);
-        tempDisplay = "";
-        tempOperation = "";
+    if (currentOperation) {
+        currentDisplay = operations[currentOperation](lastDisplay, currentDisplay);
+        if (tempDisplay) {
+            includeTemp();
+        }
+        updateDisplay();
+        lastDisplay = currentDisplay;
+        // TODO: if digit is pressed after equal, then restart currDisplay; else, if operation is pressed after equal, then keep currDisplay same
+        currentOperation = "";
     }
-    updateDisplay();
 })
 
+function handlePEMDAS() {
+    if ((currentOperation == "*" || currentOperation == "-") && (lastOperation == "+" || lastOperation == "-")) {
+        tempDisplay = lastDisplay;
+        tempOperation = lastOperation;
+        console.log("saving tempdisplay: " + tempDisplay);
+        console.log("saving temp operation: " + tempOperation);
+    }
+    else {
+        currentDisplay = operations[lastOperation](lastDisplay, currentDisplay);
+        if (tempDisplay && (currentOperation == "+" || currentOperation == "-")) {
+            includeTemp();
+        }
+        updateDisplay();
+    }
+}
+
+function includeTemp() {
+    currentDisplay = operations[tempOperation](tempDisplay, currentDisplay);
+    tempDisplay = "";
+    tempOperation = "";
+}
 function updateDisplay() {
-    
     displayDiv.textContent = currentDisplay;
 }
 
-function clearScreen() {
+function clearMemory() {
     currentDisplay = "0";
     lastDisplay = "";
     lastOperation = "";
     currentOperation = "";
+    updateDisplay();
+}
+
+// TODO: function to clear memory vs clear screen
+function clearScreen() {
+    currentDisplay = "0";
     updateDisplay();
 }
 
@@ -124,12 +127,4 @@ function switchSign(x) {
 
 function percentToDecimal(x) {
     return x/100;
-}
-
-function unaryOperate(op, x) {
-    return op(x);
-}
-
-function binaryOperate(op, x, y) {
-    return op(x, y);
 }
