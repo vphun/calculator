@@ -1,6 +1,7 @@
 let currentDisplay = "0";
 let currentOperation;
 let lastDisplay;
+let lastOperation;
 
 const displayDiv = document.querySelector(".display");
 
@@ -38,10 +39,31 @@ unaryOps.forEach(operation=>operation.addEventListener("click", e => {
 
 const binaryOps = document.querySelectorAll(".binary button");
 binaryOps.forEach(operation=>operation.addEventListener("click", e =>{
-    console.log(e.target.value);
+    lastOperation = currentOperation;
     currentOperation = e.target.value;
+    console.log(currentOperation);
+    console.log("lastDisplay before if" + lastDisplay);
+    if (lastOperation) {
+        console.log("lastDisplay in if" + lastDisplay);
+        if (currentOperation == lastOperation) {
+            currentDisplay = operations[currentOperation](lastDisplay, currentDisplay);
+            lastDisplay = "";
+            updateDisplay();
+        }
+        else {
+            if (currentOperation == "+" || currentOperation == "-") {
+                currentDisplay = operations[lastOperation](lastDisplay, currentDisplay);
+                updateDisplay();
+            }
+            else {
+                
+            }
+
+        }
+    }
     lastDisplay = currentDisplay;
     currentDisplay = "";
+
 }));
 
 const equals = document.querySelector("#equals");
