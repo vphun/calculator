@@ -8,24 +8,18 @@ let tempOperation;
 const displayDiv = document.querySelector(".display");
 
 const operations = {
-    "%" : percentToDecimal,
-    "+/-" : switchSign,
-    "+" : add,
-    "-" : subtract,
-    "*" : multiply,
-    "/" : divide,
+    "%" : x => x/100,
+    "+/-" : x => -x,
+    "+" : (x, y) => +x + +y,
+    "-" : (x, y) => x - y,
+    "*" : (x, y) => x * y,
+    "/" : (x, y) => x / y,
 };
 
-const digits = document.querySelectorAll(".digits button");
+const digits = document.querySelectorAll(".digits");
 digits.forEach(digit=>digit.addEventListener("click", e => {
     console.log(e.target.value);
-    if (currentDisplay.length <= 9) {
-        if (currentDisplay == "0") {
-            currentDisplay = "";
-        }
-        currentDisplay += e.target.value;
-        updateDisplay();
-    }
+    appendDigit(e.target.value);
 }));
 
 const clearBtn = document.querySelector("#clear");
@@ -34,19 +28,17 @@ clearBtn.addEventListener("click", e => {
     clearMemory();
 });
 
-const unaryOps = document.querySelectorAll(".unary button");
+const unaryOps = document.querySelectorAll(".unary");
 unaryOps.forEach(operation=>operation.addEventListener("click", e => {
     console.log(e.target.value);
     currentDisplay = operations[e.target.value](currentDisplay);
     updateDisplay();
 }));
 
-const binaryOps = document.querySelectorAll(".binary button");
+const binaryOps = document.querySelectorAll(".binary");
 binaryOps.forEach(operation=>operation.addEventListener("click", e =>{
     lastOperation = currentOperation;
     currentOperation = e.target.value;
-    console.log("last operation: " + lastOperation);
-    console.log("current operation: " + currentOperation);
     if (lastOperation) handlePEMDAS();
     lastDisplay = currentDisplay;
     currentDisplay = "";
@@ -66,7 +58,25 @@ equals.addEventListener("click", e => {
         // TODO: if digit is pressed after equal, then restart currDisplay; else, if operation is pressed after equal, then keep currDisplay same
         currentOperation = "";
     }
-})
+});
+
+function storeDisplay(value) {
+    lastDisplay = value;
+    currentDisplay = "";
+}
+function appendDigit(digit) {
+    if (currentDisplay.length < 9) {
+        if (digit == "." && currentDisplay.includes(".")) {
+            return;
+        }
+        else if (currentDisplay == "0") {
+            currentDisplay = "";
+        }
+        currentDisplay += digit;
+
+        updateDisplay();
+    }
+}
 
 function handlePEMDAS() {
     if ((currentOperation == "*" || currentOperation == "-") && (lastOperation == "+" || lastOperation == "-")) {
@@ -89,6 +99,7 @@ function includeTemp() {
     tempDisplay = "";
     tempOperation = "";
 }
+
 function updateDisplay() {
     displayDiv.textContent = currentDisplay;
 }
@@ -105,28 +116,4 @@ function clearMemory() {
 function clearScreen() {
     currentDisplay = "0";
     updateDisplay();
-}
-
-function add(x, y) {
-    return +x + +y;
-}
-
-function subtract(x, y) {
-    return x - y;
-}
-
-function multiply(x, y) {
-    return x * y;
-}
-
-function divide(x, y) {
-    return x / y;
-}
-
-function switchSign(x) {
-    return -x;
-}
-
-function percentToDecimal(x) {
-    return x/100;
 }
