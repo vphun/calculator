@@ -4,6 +4,7 @@ let lastDisplay;
 let lastOperation;
 let tempDisplay;
 let tempOperation;
+let answer;
 
 const displayDiv = document.querySelector(".display");
 
@@ -38,6 +39,7 @@ unaryOps.forEach(operation=>operation.addEventListener("click", e => {
 
 const binaryOps = document.querySelectorAll(".binary");
 binaryOps.forEach(operation=>operation.addEventListener("click", e => {
+    console.log(e.target.value);
     clickOperator(e.target.value);
 }));
 
@@ -62,7 +64,7 @@ equals.addEventListener("click", e => {
     console.log(currentDisplay);
     if (currentOperation) {
         
-        compute(currentOperation, lastDisplay, currentDisplay);
+        pressedEqual(currentOperation, lastDisplay, currentDisplay);
         console.log("after current: " + currentDisplay);
         console.log("after last: " + lastDisplay);
         // TODO: if digit is pressed after equal, then restart currDisplay; else, if operation is pressed after equal, then keep currDisplay same
@@ -83,12 +85,19 @@ function storeOperator(operation) {
 }
 
 function clickOperator(operation) {
+    if (answer) {
+        answer = "";
+    }
     storeOperator(operation);
     if (lastOperation) handlePEMDAS();
     storeDisplay();
 }
 
 function appendDigit(digit) {
+    if (answer) {
+        clearMemory();
+        answer = "";
+    }
     if (currentDisplay.length < 9) {
         if (digit == "." && currentDisplay.includes(".")) {
             return;
@@ -134,15 +143,16 @@ function compute(operation, x, y) {
         includeTemp();
     }
     updateDisplay();
+}
+
+function pressedEqual(operation, x, y) {
+    compute(operation, x, y);
+    answer = currentDisplay;
     lastDisplay = "";
     currentOperation = "";
     lastOperation = "";
 }
 
-
-function pressedEqual() {
-
-}
 function includeTemp() {
     currentDisplay = operations[tempOperation](tempDisplay, currentDisplay);
     tempDisplay = "";
