@@ -15,7 +15,6 @@ const operations = {
     "-" : (x, y) => x - y,
     "*" : (x, y) => x * y,
     "/" : (x, y) => x / y,
-    "=" : (x, y) => y,
 };
 
 const digits = document.querySelectorAll(".digits");
@@ -27,7 +26,12 @@ digits.forEach(digit=>digit.addEventListener("click", e => {
 const clearBtn = document.querySelector("#clear");
 clearBtn.addEventListener("click", e => {
     console.log(e.target.value);
-    clearMemory();
+    if (clearBtn.textContent == "AC") {
+        clearMemory();
+    }
+    clearScreen();
+    clearBtn.textContent = "AC";
+
 });
 
 const unaryOps = document.querySelectorAll(".unary"); 
@@ -41,6 +45,7 @@ const binaryOps = document.querySelectorAll(".binary");
 binaryOps.forEach(operation=>operation.addEventListener("click", e => {
     console.log(e.target.value);
     clickOperator(e.target.value);
+    operation.classList.add("pressed");
 }));
 
 document.addEventListener("keydown", e => {
@@ -67,10 +72,6 @@ equals.addEventListener("click", e => {
         pressedEqual(currentOperation, lastDisplay, currentDisplay);
         console.log("after current: " + currentDisplay);
         console.log("after last: " + lastDisplay);
-        // TODO: if digit is pressed after equal, then restart currDisplay; else, if operation is pressed after equal, then keep currDisplay same
-        // currentOperation = "";
-        // lastOperation = "";
-        // currentDisplay = "";
     }
 });
 
@@ -94,6 +95,9 @@ function clickOperator(operation) {
 }
 
 function appendDigit(digit) {
+    if (!currentDisplay == "" || !currentDisplay == "0") {
+        clearBtn.textContent = "C";
+    }
     if (answer) {
         clearMemory();
         answer = "";
