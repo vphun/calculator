@@ -79,8 +79,9 @@ function appendOperator(value) {
     if (currentDisplay == "0") {
         currentNumber = "0";
     }
-    outputQueue.push(currentNumber);
-    currentNumber = "";
+    if (currentNumber != "") {
+        outputQueue.push(currentNumber);
+        currentNumber = "";}
     // if (value == "+" || value == "-") {
     //     while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] == "/" || operatorStack[operatorStack.length - 1] == "*") {
     //         let op = operatorStack.pop();
@@ -134,6 +135,13 @@ function equals() {
                 let x = answer.pop();
                 console.log("outputQueue[0]: " + outputQueue[0]);
                 answer.push(operations[outputQueue[0]](x));
+                if (outputQueue[1] == "+" || outputQueue[1] == "-") {
+                    console.log("doing percent special")
+                    outputQueue.shift();
+                    let y = operations[outputQueue[0]](1, answer.pop());
+                    let x = answer.pop();
+                    answer.push(operations["*"](x, y));
+                }
 
             }
             outputQueue.shift();
