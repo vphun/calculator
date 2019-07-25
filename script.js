@@ -1,12 +1,7 @@
-// VAR declarations
+// variable declarations
 let currentDisplay = "0";
 let currentNumber = "";
-let operatorStack = [];
-let outputQueue = [];
 let answerStack = [];
-
-// JS listeners and selectors
-const displayDiv = document.querySelector(".display");
 
 const operations = {
     "%" : x => x/100,
@@ -24,163 +19,182 @@ const precedence = {
     "-" : 2,
 };
 
+const buttonMap = {
+    "=" : equals,
+    "clear" : clearMemory,
+    "del" : del
+};
+
+// JS listeners and selectors
+const displayDiv = document.querySelector(".display");
+
 const buttons = document.querySelectorAll("button");
 buttons.forEach(button => button.addEventListener("click", e => {
-    console.log(e.target.value);
-    if (e.target.value == "=") {
-        equals();
-    }
-    else if (e.target.value == "clear") {
-        clearMemory();
-        updateDisplay();
-    }
-    else if (e.target.value == "del") {
-        del();
-    }
-    else {
-        appendDisplay(e.target.value);
-    }
-}))
+    e.target.value in buttonMap ? buttonMap[e.target.value]() : appendDisplay(e.target.value);
+}));
 
-function appendDisplay(value) {
-    if ('0123456789.'.includes(value)) {
-        appendToCurrNumber(value);
-    }
-    else {
-        appendOperator(value);
-    }
-    updateDisplay();
-}
-
-function appendToCurrNumber(value) {
-    if (answerStack.length == 1) {
-        answerStack.pop();
-        currentDisplay = "";
-    }
-
-    if (currentDisplay.charAt(currentDisplay.length - 2) == '%') {
-        appendOperator('*');
-    }
-
-    if (currentDisplay == "0" && '0123456789.'.includes(value)) {
-        currentDisplay = "";
-    }
-    if (value == "." && currentNumber.includes('.')) {
-        return;
-    }
-    currentNumber += value;
-    currentDisplay += value;
-}
-
-
-
-function appendOperator(value) {
-    if (answerStack.length == 1) {
-        currentNumber = answerStack[0];
-        answerStack.pop();
-    }
-    
-    if (currentDisplay.length > 1 && '+-*/'.includes(currentDisplay.charAt(currentDisplay.length - 2))) {
-        return;
-    }
-    if (currentDisplay == "0") {
-        currentNumber = "0";
-    }
-    if (currentNumber != "") {
-        // outputQueue.push(currentNumber);
-        currentNumber = "";}
-    // while (operatorStack.length > 0 && precedence[operatorStack[operatorStack.length - 1]] > precedence[value]) {
-    //     let op = operatorStack.pop();
-    //     outputQueue.push(op); 
-    // }
-    if (value == "%") {
-        currentDisplay += `%`;
-    }
-    else{currentDisplay += ` ${value} `;}
-
-}
-
+// Functions
 function updateDisplay() {
     displayDiv.textContent = currentDisplay;
 }
 
-function equals() {
+function appendDisplay(value) {
+    '0123456789.'.includes(value) ? appendDigit(value) : appendOperator(value);
+    updateDisplay();
+}
+
+function appendDigit(digit) {
+    // if '=' key was hit previously
+    if (answerStack.length == 1) {
+        clearMemory();
+    }
+
+    // start new input
+    if (currentDisplay == "0") {
+        currentDisplay = "";
+    }
+
+    // if a number key is hit after '%', then suggest multiplication
+    if (currentDisplay[currentDisplay.length - 1] == '%') {
+        appendOperator('*');
+    }
+
+    if (digit == ".") {
+        // append 0 before decimal if no whole number specified
+        if (currentNumber == "") {
+            currentNumber = "0";
+            currentDisplay += "0";
+        }
+        // check if current number already contains decimal
+        else if (currentNumber.includes('.')) {
+            return;
+        }
+    }
+
+    currentNumber += digit;
+    currentDisplay += digit;
+}
+
+function appendOperator(operator) {
+    // if '=' key was hit previously
+    if (answerStack.length == 1) {
+        answerStack.pop();
+    }
+    
+    // reset currentNumber
+    currentNumber = "";
+
+    // check if last input was also operation
+    if (
+        currentDisplay.length > 1
+        && '+-*/'.includes(currentDisplay[currentDisplay.length - 2])
+    ) {
+        return;
+    }
+
+    operator == "%" ? currentDisplay += "%" : currentDisplay += ` ${operator} `;
+}
+
+function currStrToArr() {
     let currentDisplayArray = [""];
     for (let i = 0; i < currentDisplay.length; i++) {
         if (currentDisplay[i] != " "){
-            if ('+-/*%'.includes(currentDisplay[i])) {
+            if ('+-/*%'.includes(currentDisplay[i])) {  // operators
                 currentDisplayArray.push(currentDisplay[i]);
-                if ('+-/*'.includes(currentDisplay[i])) {
-                currentDisplayArray.push("");}
+                if ('+-/*'.includes(currentDisplay[i])) {  // no %
+                    currentDisplayArray.push("");
+                }
             }
-            else {
+            else {  // numbers
                 currentDisplayArray[currentDisplayArray.length - 1] += currentDisplay[i];
             }
         }
-        console.log(currentDisplayArray);
     }
-    if (currentDisplayArray[currentDisplayArray.length - 1] == "") {
-        currentDisplayArray.pop();
-    }
-    console.log(currentDisplayArray);
+    return currentDisplayArray;
+}
 
-    for (let i = 0; i < currentDisplayArray.length; i++) {
-        if (!'+-/*%'.includes(currentDisplayArray[i])) {
-            outputQueue.push(currentDisplayArray[i]);
+function infixToPostfix(infixArr) {
+    let operatorStack = [];
+    let outputQueue = [];
 
+    for (let i = 0; i < infixArr.length; i++) {
+        if (!'+-/*%'.includes(infixArr[i])) {  // numbers go directly to queue
+            outputQueue.push(infixArr[i]);
         }
-        else {
-            while (operatorStack.length > 0 && precedence[operatorStack[operatorStack.length - 1]] >= precedence[currentDisplayArray[i]]) {
-                let op = operatorStack.pop();
-                outputQueue.push(op); 
+        else {  // operators
+            // pop from operatorStack to outputQueue if top of stack is higher precedence
+            while (
+                operatorStack.length > 0
+                && precedence[operatorStack[operatorStack.length - 1]]
+                >= precedence[infixArr[i]]
+            ) {
+                outputQueue.push(operatorStack.pop()); 
+
+                // prioritize  %+ and %-
+                if (outputQueue[outputQueue.length - 1] == "%") {
+                    if (
+                        operatorStack[operatorStack.length - 1] == "+"
+                        || operatorStack[operatorStack.length - 1] == "-"
+                    ) {
+                        outputQueue.push(operatorStack.pop());
+                    }
+                }
             }
-                
-        operatorStack.push(currentDisplayArray[i]);
+
+            operatorStack.push(infixArr[i]);
         }
     }
 
-
-
-    // if (currentNumber != "") {
-    // outputQueue.push(currentNumber);
-    // currentNumber = "";}
+    // pop rest of operatorStack to outputQueue
     while (operatorStack.length > 0) {
-        let op = operatorStack.pop();
-        outputQueue.push(op);
+        outputQueue.push(operatorStack.pop());
     }
-    while (outputQueue.length > 0) {
-        if (!'+-/*%'.includes(outputQueue[0])) {
-            answerStack.push(outputQueue.shift());
-            console.log("outpuequeue: " + outputQueue);
-            console.log("answerStack: " + answerStack);
+    return outputQueue;
+}
+
+function calculatePostfix(postfixArr) {
+    while (postfixArr.length > 0) {
+        if (!'+-/*%'.includes(postfixArr[0])) {  // numbers go to answerStack
+            answerStack.push(postfixArr.shift());
         }
-        else if ('+-/*%'.includes(outputQueue[0])) {
-            if ('+-/*'.includes(outputQueue[0])) {
-            let y = answerStack.pop();
-            let x = answerStack.pop();
-            console.log("outputQueue[0]: " + outputQueue[0]);
-            answerStack.push(operations[outputQueue[0]](x, y));
-            }
-            else {
+        else if ('+-/*%'.includes(postfixArr[0])) {  // operations
+            if ('+-/*'.includes(postfixArr[0])) {  // binary operators (no %)
+                let y = answerStack.pop();
                 let x = answerStack.pop();
-                console.log("outputQueue[0]: " + outputQueue[0]);
-                answerStack.push(operations[outputQueue[0]](x));
-                if (outputQueue[1] == "+" || outputQueue[1] == "-") {
-                    console.log("doing percent special")
-                    outputQueue.shift();
-                    let y = operations[outputQueue[0]](1, answerStack.pop());
+                answerStack.push(operations[postfixArr[0]](x, y));
+            }
+            else { // %
+                let x = answerStack.pop();
+                answerStack.push(operations[postfixArr[0]](x));
+
+                // handle %+ and %-: x +/- y% = x * (1 +/- y/100)
+                if (postfixArr[1] == "+" || postfixArr[1] == "-") {
+                    postfixArr.shift();
+                    let y = operations[postfixArr[0]](1, answerStack.pop());
                     let x = answerStack.pop();
                     answerStack.push(operations["*"](x, y));
                 }
 
             }
-            outputQueue.shift();
-            console.log("outpuequeue: " + outputQueue);
-            console.log("answerStack: " + answerStack); 
+            postfixArr.shift();
         }
-
     }
-    console.log(answerStack);
+}
+
+function equals() {
+    let currentDisplayArray = currStrToArr();
+
+    // do not evaluate if display ends with operator or if only one number
+    if (
+        currentDisplayArray.length == 1
+        || '+-/*'.includes(currentDisplayArray[currentDisplayArray.length - 1])
+    ) {
+        return;
+    }
+
+    let postfixQueue = infixToPostfix(currentDisplayArray);
+
+    calculatePostfix(postfixQueue);
     currentDisplay = answerStack[0];
     updateDisplay();
 }
@@ -188,23 +202,27 @@ function equals() {
 function clearMemory() {
     currentDisplay = "0";
     currentNumber = "";
-    operatorStack = [];
-    outputQueue = [];
     answerStack = [];
+    updateDisplay();
 }
 
 function del() {
-    if (currentDisplay.length > 0) {
-        if(!"+-/*% ".includes(currentDisplay[currentDisplay.length - 1])) {
+    // if '=' key was hit previously
+    if (answerStack.length == 1) {
+        clearMemory();
+    }
+    
+    else if (currentDisplay.length > 0) {
+        if (!"+-/*% ".includes(currentDisplay[currentDisplay.length - 1])) {
             currentNumber = currentNumber.slice(0, -1);
             currentDisplay = currentDisplay.slice(0, -1);
         }
-        else if(currentDisplay[currentDisplay.length - 1] == "%") {
+        else if (currentDisplay[currentDisplay.length - 1] == "%") {
             currentDisplay = currentDisplay.slice(0, -1);
         }
         else if (currentDisplay[currentDisplay.length - 1] == " ") {
         currentDisplay = currentDisplay.slice(0, -3);
-}
+        }
 
         if (currentDisplay.length == 0) {
             currentDisplay = "0";
