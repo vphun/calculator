@@ -1,7 +1,7 @@
 // variable declarations
 let currentDisplay = "0";
 let currentNumber = "";
-let answerStack = [];
+let answer;
 
 const operations = {
     "%" : x => x/100,
@@ -27,7 +27,7 @@ const buttonMap = {
 
 // JS listeners and selectors
 const displayDiv = document.querySelector(".display");
-
+const equationDiv = document.querySelector(".equation");
 const buttons = document.querySelectorAll("button");
 buttons.forEach(button => button.addEventListener("click", e => {
     e.target.value in buttonMap ? buttonMap[e.target.value]() : appendDisplay(e.target.value);
@@ -46,7 +46,8 @@ function appendDisplay(value) {
 
 function appendDigit(digit) {
     // if '=' key was hit previously
-    if (answerStack.length == 1) {
+    if (answer) {
+        equationDiv.textContent = `Ans = ${answer}`;
         clearMemory();
     }
 
@@ -78,8 +79,9 @@ function appendDigit(digit) {
 
 function appendOperator(operator) {
     // if '=' key was hit previously
-    if (answerStack.length == 1) {
-        answerStack.pop();
+    if (answer) {
+        equationDiv.textContent = `Ans = ${answer}`;
+        answer = "";
     }
     
     // reset currentNumber
@@ -154,6 +156,8 @@ function infixToPostfix(infixArr) {
 }
 
 function calculatePostfix(postfixArr) {
+    let answerStack = [];
+
     while (postfixArr.length > 0) {
         if (!'+-/*%'.includes(postfixArr[0])) {  // numbers go to answerStack
             answerStack.push(postfixArr.shift());
@@ -180,11 +184,12 @@ function calculatePostfix(postfixArr) {
             postfixArr.shift();
         }
     }
+    return answerStack[0];
 }
 
 function equals() {
     let currentDisplayArray = currStrToArr();
-
+    document.querySelector(".display");
     // do not evaluate if display ends with operator or if only one number
     if (
         currentDisplayArray.length == 1
@@ -192,24 +197,24 @@ function equals() {
     ) {
         return;
     }
+    equationDiv.textContent = currentDisplay + " = ";
 
     let postfixQueue = infixToPostfix(currentDisplayArray);
-
-    calculatePostfix(postfixQueue);
-    currentDisplay = answerStack[0];
+    answer = calculatePostfix(postfixQueue);
+    currentDisplay = answer;
     // updateDisplay();
 }
 
 function clearMemory() {
     currentDisplay = "0";
     currentNumber = "";
-    answerStack = [];
+    answer = "";
     // updateDisplay();
 }
 
 function del() {
     // if '=' key was hit previously
-    if (answerStack.length == 1) {
+    if (answer) {
         clearMemory();
     }
     
