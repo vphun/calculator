@@ -1,11 +1,10 @@
+// VAR declarations
 let currentDisplay = "0";
-let currentOperation;
-let lastDisplay;
-let lastOperation;
-let tempDisplay;
-let tempOperation;
-let answer;
-
+let currentNumber = "";
+let operatorStack = [];
+let outputQueue = [];
+let answer = [];
+// JS listeners and selectors
 const displayDiv = document.querySelector(".display");
 
 const operations = {
@@ -17,166 +16,133 @@ const operations = {
     "/" : (x, y) => x / y,
 };
 
-const digits = document.querySelectorAll(".digits");
-digits.forEach(digit=>digit.addEventListener("click", e => {
+const buttons = document.querySelectorAll("button");
+buttons.forEach(button => button.addEventListener("click", e => {
     console.log(e.target.value);
-    appendDigit(e.target.value);
-}));
-
-const clearBtn = document.querySelector("#clear");
-clearBtn.addEventListener("click", e => {
-    console.log(e.target.value);
-    if (clearBtn.textContent == "AC") {
-        clearMemory();
+    if (e.target.value == "=") {
+        equals();
     }
-    clearScreen();
-    clearBtn.textContent = "AC";
-
-});
-
-const unaryOps = document.querySelectorAll(".unary"); 
-unaryOps.forEach(operation=>operation.addEventListener("click", e => {
-    console.log(e.target.value);
-    currentDisplay = operations[e.target.value](currentDisplay);
-    updateDisplay();
-}));
-
-const binaryOps = document.querySelectorAll(".binary");
-binaryOps.forEach(operation=>operation.addEventListener("click", e => {
-    console.log(e.target.value);
-    clickOperator(e.target.value);
-    operation.classList.add("pressed");
-}));
-
-document.addEventListener("keydown", e => {
-    console.log(e.keyCode);
-    if (e.keyCode >= 48 && e.keyCode <= 57 || e.keyCode == 190) {
-        appendDigit(e.key);
-    }
-    else if (e.key in operations) {
-        storeDisplay(e.key);
-    }
-    else if (e.keyCode == "8") {
-        deleteDigit();
-    }
-})
-
-const equals = document.querySelector("#equals");
-equals.addEventListener("click", e => {
-    console.log(e.target.value);
-    console.log(currentOperation);
-    console.log(lastDisplay);
-    console.log(currentDisplay);
-    if (currentOperation) {
-        
-        pressedEqual(currentOperation, lastDisplay, currentDisplay);
-        console.log("after current: " + currentDisplay);
-        console.log("after last: " + lastDisplay);
-    }
-});
-
-function storeDisplay() {
-    lastDisplay = currentDisplay;
-    currentDisplay = "";
-}
-
-function storeOperator(operation) {
-    lastOperation = currentOperation;
-    currentOperation = operation;
-}
-
-function clickOperator(operation) {
-    if (answer) {
-        answer = "";
-    }
-    storeOperator(operation);
-    if (lastOperation) handlePEMDAS();
-    storeDisplay();
-}
-
-function appendDigit(digit) {
-    if (!currentDisplay == "" || !currentDisplay == "0") {
-        clearBtn.textContent = "C";
-    }
-    if (answer) {
-        clearMemory();
-        answer = "";
-    }
-    if (currentDisplay.length < 9) {
-        if (digit == "." && currentDisplay.includes(".")) {
-            return;
-        }
-        else if (currentDisplay == "0") {
-            currentDisplay = "";
-        }
-        currentDisplay += digit;
-
-        updateDisplay();
-    }
-}
-
-function deleteDigit(digit) {
-    if (currentDisplay.length > 0) {
-        currentDisplay = currentDisplay.slice(0, -1);
-        if (currentDisplay.length == 0) {
-            currentDisplay = "0";
-        }
-        updateDisplay();
-    }
-}
-
-function handlePEMDAS() {
-    if ((currentOperation == "*" || currentOperation == "-") && (lastOperation == "+" || lastOperation == "-")) {
-        tempDisplay = lastDisplay;
-        tempOperation = lastOperation;
-        console.log("saving tempdisplay: " + tempDisplay);
-        console.log("saving temp operation: " + tempOperation);
+    else if (e.target.value == "clear") {
+        return;
     }
     else {
-        currentDisplay = operations[lastOperation](lastDisplay, currentDisplay);
-        if (tempDisplay && (currentOperation == "+" || currentOperation == "-")) {
-            includeTemp();
-        }
-        updateDisplay();
+        appendDisplay(e.target.value);
     }
-}
+}))
 
-function compute(operation, x, y) {
-    currentDisplay = operations[operation](x, y);
-    if (tempDisplay) {
-        includeTemp();
+function appendDisplay(value) {
+    if ('0123456789.'.includes(value)) {
+        appendToCurrNumber(value);
+    }
+    else {
+        appendOperator(value);
     }
     updateDisplay();
 }
 
-function pressedEqual(operation, x, y) {
-    compute(operation, x, y);
-    answer = currentDisplay;
-    lastDisplay = "";
-    currentOperation = "";
-    lastOperation = "";
+function appendToCurrNumber(value) {
+    if (answer.length == 1) {
+        answer.pop();
+        currentDisplay = "";
+    }
+
+    if (currentDisplay.charAt(currentDisplay.length - 2) == '%') {
+        appendOperator('*');
+    }
+
+    if (currentDisplay == "0" && '0123456789.'.includes(value)) {
+        currentDisplay = "";
+    }
+    if (value == "." && currentNumber.includes('.')) {
+        return;
+    }
+    currentNumber += value;
+    currentDisplay += value;
 }
 
-function includeTemp() {
-    currentDisplay = operations[tempOperation](tempDisplay, currentDisplay);
-    tempDisplay = "";
-    tempOperation = "";
+const precedence = {
+    "%" : 4,
+    "*" : 3,
+    "/" : 3,
+    "+" : 2,
+    "-" : 2,
+};
+
+function appendOperator(value) {
+    if (answer.length == 1) {
+        currentNumber = answer[0];
+        answer.pop();
+    }
+    if (currentDisplay.length > 1 && '+-*/'.includes(currentDisplay.charAt(currentDisplay.length - 2))) {
+        return;
+    }
+    if (currentDisplay == "0") {
+        currentNumber = "0";
+    }
+    outputQueue.push(currentNumber);
+    currentNumber = "";
+    // if (value == "+" || value == "-") {
+    //     while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] == "/" || operatorStack[operatorStack.length - 1] == "*") {
+    //         let op = operatorStack.pop();
+    //         outputQueue.push(op);
+    //     }
+    // }
+    while (operatorStack.length > 0 && precedence[operatorStack[operatorStack.length - 1]] > precedence[value]) {
+        let op = operatorStack.pop();
+        outputQueue.push(op); 
+    }
+    if (value == "%") {
+        currentDisplay += `% `;
+    }
+    else{currentDisplay += ` ${value} `;}
+    
+    operatorStack.push(value);
 }
 
 function updateDisplay() {
     displayDiv.textContent = currentDisplay;
 }
 
-function clearMemory() {
-    currentDisplay = "0";
-    lastDisplay = "";
-    lastOperation = "";
-    currentOperation = "";
-    updateDisplay();
-}
+function equals() {
+    if (currentNumber != "") {
+    outputQueue.push(currentNumber);
+    currentNumber = "";}
+    while (operatorStack.length > 0) {
+        let op = operatorStack.pop();
+        outputQueue.push(op);
+    }
+    while (outputQueue.length > 0) {
+        if (!'+-/*%'.includes(outputQueue[0])) {
+            answer.push(outputQueue.shift());
+            console.log("outpuequeue: " + outputQueue);
+            console.log("answer: " + answer);
+        }
+        // else if ('%'.includes(outputQueue[0])) {
 
-// TODO: function to clear memory vs clear screen
-function clearScreen() {
-    currentDisplay = "0";
+        //     outputQueue.shift();
+        //     console.log("outpuequeue: " + outputQueue);
+        //     console.log("answer: " + answer); 
+        // }
+        else if ('+-/*%'.includes(outputQueue[0])) {
+            if ('+-/*'.includes(outputQueue[0])) {
+            let y = answer.pop();
+            let x = answer.pop();
+            console.log("outputQueue[0]: " + outputQueue[0]);
+            answer.push(operations[outputQueue[0]](x, y));
+            }
+            else {
+                let x = answer.pop();
+                console.log("outputQueue[0]: " + outputQueue[0]);
+                answer.push(operations[outputQueue[0]](x));
+
+            }
+            outputQueue.shift();
+            console.log("outpuequeue: " + outputQueue);
+            console.log("answer: " + answer); 
+        }
+
+    }
+    console.log(answer);
+    currentDisplay = answer[0];
     updateDisplay();
 }
