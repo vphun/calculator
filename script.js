@@ -31,6 +31,7 @@ const displayDiv = document.querySelector(".display");
 const buttons = document.querySelectorAll("button");
 buttons.forEach(button => button.addEventListener("click", e => {
     e.target.value in buttonMap ? buttonMap[e.target.value]() : appendDisplay(e.target.value);
+    updateDisplay();
 }));
 
 // Functions
@@ -40,7 +41,7 @@ function updateDisplay() {
 
 function appendDisplay(value) {
     '0123456789.'.includes(value) ? appendDigit(value) : appendOperator(value);
-    updateDisplay();
+    // updateDisplay();
 }
 
 function appendDigit(digit) {
@@ -84,12 +85,12 @@ function appendOperator(operator) {
     // reset currentNumber
     currentNumber = "";
 
-    // check if last input was also operation
+    // check if last input was also operation and change
     if (
         currentDisplay.length > 1
         && '+-*/'.includes(currentDisplay[currentDisplay.length - 2])
     ) {
-        return;
+        currentDisplay = currentDisplay.slice(0, -3);
     }
 
     operator == "%" ? currentDisplay += "%" : currentDisplay += ` ${operator} `;
@@ -196,14 +197,14 @@ function equals() {
 
     calculatePostfix(postfixQueue);
     currentDisplay = answerStack[0];
-    updateDisplay();
+    // updateDisplay();
 }
 
 function clearMemory() {
     currentDisplay = "0";
     currentNumber = "";
     answerStack = [];
-    updateDisplay();
+    // updateDisplay();
 }
 
 function del() {
@@ -221,13 +222,13 @@ function del() {
             currentDisplay = currentDisplay.slice(0, -1);
         }
         else if (currentDisplay[currentDisplay.length - 1] == " ") {
-        currentDisplay = currentDisplay.slice(0, -3);
+            currentDisplay = currentDisplay.slice(0, -3);
         }
 
         if (currentDisplay.length == 0) {
             currentDisplay = "0";
         }
-        updateDisplay();
+        // updateDisplay();
     }
 
 }
