@@ -27,27 +27,49 @@ const buttonMap = {
 
 // JS listeners and selectors
 const displayDiv = document.querySelector(".display");
-const equationDiv = document.querySelector(".equation");
+const answerDiv = document.querySelector(".answer");
 const buttons = document.querySelectorAll("button");
 buttons.forEach(button => button.addEventListener("click", e => {
     e.target.value in buttonMap ? buttonMap[e.target.value]() : appendDisplay(e.target.value);
     updateDisplay();
+    updateAnswer();
 }));
+
+document.addEventListener("keydown", e => {
+    console.log(e.keyCode);
+    console.log(e.key)
+    if (e.keyCode >= 48 && e.keyCode <= 57 || e.keyCode == 190) {
+        appendDigit(e.key);
+    }
+    else if (e.key in operations) {
+        appendOperator(e.key);
+    }
+    else if (e.keyCode == "8") {
+        del();
+    }
+    else if (e.keyCode == "61" || e.keyCode == "13") {
+        equals();
+    }
+    updateDisplay();
+    updateAnswer();
+})
 
 // Functions
 function updateDisplay() {
     displayDiv.textContent = currentDisplay;
 }
 
+function updateAnswer() {
+    answerDiv.textContent = answer;
+}
+
 function appendDisplay(value) {
     '0123456789.'.includes(value) ? appendDigit(value) : appendOperator(value);
-    // updateDisplay();
 }
 
 function appendDigit(digit) {
     // if '=' key was hit previously
     if (answer) {
-        equationDiv.textContent = `Ans = ${answer}`;
         clearMemory();
     }
 
@@ -80,7 +102,7 @@ function appendDigit(digit) {
 function appendOperator(operator) {
     // if '=' key was hit previously
     if (answer) {
-        equationDiv.textContent = `Ans = ${answer}`;
+        currentDisplay = answer;
         answer = "";
     }
     
@@ -189,7 +211,6 @@ function calculatePostfix(postfixArr) {
 
 function equals() {
     let currentDisplayArray = currStrToArr();
-    document.querySelector(".display");
     // do not evaluate if display ends with operator or if only one number
     if (
         currentDisplayArray.length == 1
@@ -197,19 +218,16 @@ function equals() {
     ) {
         return;
     }
-    equationDiv.textContent = currentDisplay + " = ";
+    currentDisplay.textContent += " = ";
 
     let postfixQueue = infixToPostfix(currentDisplayArray);
     answer = calculatePostfix(postfixQueue);
-    currentDisplay = answer;
-    // updateDisplay();
 }
 
 function clearMemory() {
     currentDisplay = "0";
     currentNumber = "";
     answer = "";
-    // updateDisplay();
 }
 
 function del() {
@@ -233,7 +251,6 @@ function del() {
         if (currentDisplay.length == 0) {
             currentDisplay = "0";
         }
-        // updateDisplay();
     }
 
 }
