@@ -3,17 +3,25 @@ let currentDisplay = "0";
 let currentNumber = "";
 let operatorStack = [];
 let outputQueue = [];
-let answer = [];
+let answerStack = [];
+
 // JS listeners and selectors
 const displayDiv = document.querySelector(".display");
 
 const operations = {
     "%" : x => x/100,
-    "+/-" : x => -x,
     "+" : (x, y) => +x + +y,
     "-" : (x, y) => x - y,
     "*" : (x, y) => x * y,
     "/" : (x, y) => x / y,
+};
+
+const precedence = {
+    "%" : 4,
+    "*" : 3,
+    "/" : 3,
+    "+" : 2,
+    "-" : 2,
 };
 
 const buttons = document.querySelectorAll("button");
@@ -23,7 +31,11 @@ buttons.forEach(button => button.addEventListener("click", e => {
         equals();
     }
     else if (e.target.value == "clear") {
-        return;
+        clearMemory();
+        updateDisplay();
+    }
+    else if (e.target.value == "del") {
+        del();
     }
     else {
         appendDisplay(e.target.value);
@@ -41,8 +53,8 @@ function appendDisplay(value) {
 }
 
 function appendToCurrNumber(value) {
-    if (answer.length == 1) {
-        answer.pop();
+    if (answerStack.length == 1) {
+        answerStack.pop();
         currentDisplay = "";
     }
 
@@ -60,19 +72,14 @@ function appendToCurrNumber(value) {
     currentDisplay += value;
 }
 
-const precedence = {
-    "%" : 4,
-    "*" : 3,
-    "/" : 3,
-    "+" : 2,
-    "-" : 2,
-};
+
 
 function appendOperator(value) {
-    if (answer.length == 1) {
-        currentNumber = answer[0];
-        answer.pop();
+    if (answerStack.length == 1) {
+        currentNumber = answerStack[0];
+        answerStack.pop();
     }
+    
     if (currentDisplay.length > 1 && '+-*/'.includes(currentDisplay.charAt(currentDisplay.length - 2))) {
         return;
     }
@@ -80,24 +87,17 @@ function appendOperator(value) {
         currentNumber = "0";
     }
     if (currentNumber != "") {
-        outputQueue.push(currentNumber);
+        // outputQueue.push(currentNumber);
         currentNumber = "";}
-    // if (value == "+" || value == "-") {
-    //     while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1] == "/" || operatorStack[operatorStack.length - 1] == "*") {
-    //         let op = operatorStack.pop();
-    //         outputQueue.push(op);
-    //     }
+    // while (operatorStack.length > 0 && precedence[operatorStack[operatorStack.length - 1]] > precedence[value]) {
+    //     let op = operatorStack.pop();
+    //     outputQueue.push(op); 
     // }
-    while (operatorStack.length > 0 && precedence[operatorStack[operatorStack.length - 1]] > precedence[value]) {
-        let op = operatorStack.pop();
-        outputQueue.push(op); 
-    }
     if (value == "%") {
-        currentDisplay += `% `;
+        currentDisplay += `%`;
     }
     else{currentDisplay += ` ${value} `;}
-    
-    operatorStack.push(value);
+
 }
 
 function updateDisplay() {
@@ -105,52 +105,111 @@ function updateDisplay() {
 }
 
 function equals() {
-    if (currentNumber != "") {
-    outputQueue.push(currentNumber);
-    currentNumber = "";}
+    let currentDisplayArray = [""];
+    for (let i = 0; i < currentDisplay.length; i++) {
+        if (currentDisplay[i] != " "){
+            if ('+-/*%'.includes(currentDisplay[i])) {
+                currentDisplayArray.push(currentDisplay[i]);
+                if ('+-/*'.includes(currentDisplay[i])) {
+                currentDisplayArray.push("");}
+            }
+            else {
+                currentDisplayArray[currentDisplayArray.length - 1] += currentDisplay[i];
+            }
+        }
+        console.log(currentDisplayArray);
+    }
+    if (currentDisplayArray[currentDisplayArray.length - 1] == "") {
+        currentDisplayArray.pop();
+    }
+    console.log(currentDisplayArray);
+
+    for (let i = 0; i < currentDisplayArray.length; i++) {
+        if (!'+-/*%'.includes(currentDisplayArray[i])) {
+            outputQueue.push(currentDisplayArray[i]);
+
+        }
+        else {
+            while (operatorStack.length > 0 && precedence[operatorStack[operatorStack.length - 1]] >= precedence[currentDisplayArray[i]]) {
+                let op = operatorStack.pop();
+                outputQueue.push(op); 
+            }
+                
+        operatorStack.push(currentDisplayArray[i]);
+        }
+    }
+
+
+
+    // if (currentNumber != "") {
+    // outputQueue.push(currentNumber);
+    // currentNumber = "";}
     while (operatorStack.length > 0) {
         let op = operatorStack.pop();
         outputQueue.push(op);
     }
     while (outputQueue.length > 0) {
         if (!'+-/*%'.includes(outputQueue[0])) {
-            answer.push(outputQueue.shift());
+            answerStack.push(outputQueue.shift());
             console.log("outpuequeue: " + outputQueue);
-            console.log("answer: " + answer);
+            console.log("answerStack: " + answerStack);
         }
-        // else if ('%'.includes(outputQueue[0])) {
-
-        //     outputQueue.shift();
-        //     console.log("outpuequeue: " + outputQueue);
-        //     console.log("answer: " + answer); 
-        // }
         else if ('+-/*%'.includes(outputQueue[0])) {
             if ('+-/*'.includes(outputQueue[0])) {
-            let y = answer.pop();
-            let x = answer.pop();
+            let y = answerStack.pop();
+            let x = answerStack.pop();
             console.log("outputQueue[0]: " + outputQueue[0]);
-            answer.push(operations[outputQueue[0]](x, y));
+            answerStack.push(operations[outputQueue[0]](x, y));
             }
             else {
-                let x = answer.pop();
+                let x = answerStack.pop();
                 console.log("outputQueue[0]: " + outputQueue[0]);
-                answer.push(operations[outputQueue[0]](x));
+                answerStack.push(operations[outputQueue[0]](x));
                 if (outputQueue[1] == "+" || outputQueue[1] == "-") {
                     console.log("doing percent special")
                     outputQueue.shift();
-                    let y = operations[outputQueue[0]](1, answer.pop());
-                    let x = answer.pop();
-                    answer.push(operations["*"](x, y));
+                    let y = operations[outputQueue[0]](1, answerStack.pop());
+                    let x = answerStack.pop();
+                    answerStack.push(operations["*"](x, y));
                 }
 
             }
             outputQueue.shift();
             console.log("outpuequeue: " + outputQueue);
-            console.log("answer: " + answer); 
+            console.log("answerStack: " + answerStack); 
         }
 
     }
-    console.log(answer);
-    currentDisplay = answer[0];
+    console.log(answerStack);
+    currentDisplay = answerStack[0];
     updateDisplay();
+}
+
+function clearMemory() {
+    currentDisplay = "0";
+    currentNumber = "";
+    operatorStack = [];
+    outputQueue = [];
+    answerStack = [];
+}
+
+function del() {
+    if (currentDisplay.length > 0) {
+        if(!"+-/*% ".includes(currentDisplay[currentDisplay.length - 1])) {
+            currentNumber = currentNumber.slice(0, -1);
+            currentDisplay = currentDisplay.slice(0, -1);
+        }
+        else if(currentDisplay[currentDisplay.length - 1] == "%") {
+            currentDisplay = currentDisplay.slice(0, -1);
+        }
+        else if (currentDisplay[currentDisplay.length - 1] == " ") {
+        currentDisplay = currentDisplay.slice(0, -3);
+}
+
+        if (currentDisplay.length == 0) {
+            currentDisplay = "0";
+        }
+        updateDisplay();
+    }
+
 }
