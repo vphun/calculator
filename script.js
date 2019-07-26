@@ -7,14 +7,14 @@ const operations = {
     "%" : x => x/100,
     "+" : (x, y) => +x + +y,
     "-" : (x, y) => x - y,
-    "*" : (x, y) => x * y,
-    "/" : (x, y) => x / y,
+    "×" : (x, y) => x * y,
+    "÷" : (x, y) => x / y,
 };
 
 const precedence = {
     "%" : 4,
-    "*" : 3,
-    "/" : 3,
+    "×" : 3,
+    "÷" : 3,
     "+" : 2,
     "-" : 2,
 };
@@ -23,6 +23,34 @@ const buttonMap = {
     "=" : equals,
     "clear" : clearMemory,
     "del" : del
+};
+
+const numPadCodes = {
+    48 : "0",
+    49 : "1",
+    50 : "2",
+    51 : "3",
+    52 : "4",
+    53 : "5",
+    54 : "6",
+    55 : "7",
+    56 : "8",
+    57 : "9",
+    190 : ".",
+    173 : "-",
+    191 : "÷",
+};
+
+const numPadShiftCodes = {
+    61 : "+",
+    56 : "×",
+    53 : "%"
+}
+
+const operationCodes = {
+    61 : equals, // =
+    13 : equals, // Enter
+    8 : del  // Backspace
 };
 
 // JS listeners and selectors
@@ -37,22 +65,28 @@ buttons.forEach(button => button.addEventListener("click", e => {
 
 document.addEventListener("keydown", e => {
     console.log(e.keyCode);
-    console.log(e.key)
-    if (e.keyCode >= 48 && e.keyCode <= 57 || e.keyCode == 190) {
-        appendDigit(e.key);
+    console.log(e.key);
+    console.log(e.shiftKey);
+    if (
+        (e.keyCode in numPadCodes)
+        || (e.keyCode in operationCodes)
+        || (e.keyCode in numPadShiftCodes)
+    ) {
+        console.log("has")
+        if (e.keyCode in numPadShiftCodes && e.shiftKey == true) {
+            appendDisplay(numPadShiftCodes[e.keyCode]);
+        }
+        else if (e.keyCode in numPadCodes) {
+            appendDisplay(numPadCodes[e.keyCode]);
+        }
+
+        else if (e.keyCode in operationCodes && e.shiftKey == false) {
+            operationCodes[e.keyCode]();
+        }
+        updateDisplay();
+        updateAnswer();
     }
-    else if (e.key in operations) {
-        appendOperator(e.key);
-    }
-    else if (e.keyCode == "8") {
-        del();
-    }
-    else if (e.keyCode == "61" || e.keyCode == "13") {
-        equals();
-    }
-    updateDisplay();
-    updateAnswer();
-})
+});
 
 // Functions
 function updateDisplay() {
@@ -80,7 +114,7 @@ function appendDigit(digit) {
 
     // if a number key is hit after '%', then suggest multiplication
     if (currentDisplay[currentDisplay.length - 1] == '%') {
-        appendOperator('*');
+        appendOperator('×');
     }
 
     if (digit == ".") {
@@ -112,7 +146,7 @@ function appendOperator(operator) {
     // check if last input was also operation and change
     if (
         currentDisplay.length > 1
-        && '+-*/'.includes(currentDisplay[currentDisplay.length - 2])
+        && '+-×÷'.includes(currentDisplay[currentDisplay.length - 2])
     ) {
         currentDisplay = currentDisplay.slice(0, -3);
     }
@@ -124,9 +158,9 @@ function currStrToArr() {
     let currentDisplayArray = [""];
     for (let i = 0; i < currentDisplay.length; i++) {
         if (currentDisplay[i] != " "){
-            if ('+-/*%'.includes(currentDisplay[i])) {  // operators
+            if ('+-÷×%'.includes(currentDisplay[i])) {  // operators
                 currentDisplayArray.push(currentDisplay[i]);
-                if ('+-/*'.includes(currentDisplay[i])) {  // no %
+                if ('+-÷×'.includes(currentDisplay[i])) {  // no %
                     currentDisplayArray.push("");
                 }
             }
@@ -143,7 +177,7 @@ function infixToPostfix(infixArr) {
     let outputQueue = [];
 
     for (let i = 0; i < infixArr.length; i++) {
-        if (!'+-/*%'.includes(infixArr[i])) {  // numbers go directly to queue
+        if (!'+-÷×%'.includes(infixArr[i])) {  // numbers go directly to queue
             outputQueue.push(infixArr[i]);
         }
         else {  // operators
@@ -181,11 +215,11 @@ function calculatePostfix(postfixArr) {
     let answerStack = [];
 
     while (postfixArr.length > 0) {
-        if (!'+-/*%'.includes(postfixArr[0])) {  // numbers go to answerStack
+        if (!'+-÷×%'.includes(postfixArr[0])) {  // numbers go to answerStack
             answerStack.push(postfixArr.shift());
         }
-        else if ('+-/*%'.includes(postfixArr[0])) {  // operations
-            if ('+-/*'.includes(postfixArr[0])) {  // binary operators (no %)
+        else if ('+-÷×%'.includes(postfixArr[0])) {  // operations
+            if ('+-÷×'.includes(postfixArr[0])) {  // binary operators (no %)
                 let y = answerStack.pop();
                 let x = answerStack.pop();
                 answerStack.push(operations[postfixArr[0]](x, y));
@@ -194,12 +228,12 @@ function calculatePostfix(postfixArr) {
                 let x = answerStack.pop();
                 answerStack.push(operations[postfixArr[0]](x));
 
-                // handle %+ and %-: x +/- y% = x * (1 +/- y/100)
+                // handle %+ and %-: x +/- y% = x × (1 +/- y/100)
                 if (postfixArr[1] == "+" || postfixArr[1] == "-") {
                     postfixArr.shift();
                     let y = operations[postfixArr[0]](1, answerStack.pop());
                     let x = answerStack.pop();
-                    answerStack.push(operations["*"](x, y));
+                    answerStack.push(operations["×"](x, y));
                 }
 
             }
@@ -214,12 +248,11 @@ function equals() {
     // do not evaluate if display ends with operator or if only one number
     if (
         currentDisplayArray.length == 1
-        || '+-/*'.includes(currentDisplayArray[currentDisplayArray.length - 1])
+        || '+-÷×'.includes(currentDisplayArray[currentDisplayArray.length - 1])
     ) {
         return;
     }
-    currentDisplay.textContent += " = ";
-
+    
     let postfixQueue = infixToPostfix(currentDisplayArray);
     answer = calculatePostfix(postfixQueue);
 }
@@ -237,7 +270,7 @@ function del() {
     }
     
     else if (currentDisplay.length > 0) {
-        if (!"+-/*% ".includes(currentDisplay[currentDisplay.length - 1])) {
+        if (!"+-÷×% ".includes(currentDisplay[currentDisplay.length - 1])) {
             currentNumber = currentNumber.slice(0, -1);
             currentDisplay = currentDisplay.slice(0, -1);
         }
